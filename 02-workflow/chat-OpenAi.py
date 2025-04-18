@@ -2,10 +2,15 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import json
 import requests
+import os
 
 load_dotenv()
 
 client = OpenAI()
+
+def run_command(command):
+    result = os.system(command=command)
+    return result
 
 def get_weather(city:str):
     # Simulate a weather API call
@@ -22,10 +27,14 @@ available_tools = {
     "get_weather":{
         "function": get_weather,
         "description": "Takes city name as input and returns the weather data",
+    },
+    "run_command":{
+        "function": run_command,
+        "description": "Takes command as input and returns the result of the command",
     }
 }
 
-system_prompt = """
+SYSTEM_PROMPT = """
     You are a helpful assistant who is specialized in resolving user query.
     you work on start,plan,action,observe mode.
     For the given user query and available tools, plan the step by step execution,based on the planning,select the relavent tool from the availale tool,based on the tool selection you perform an action to call the tool, wait for the obeservation and based on observation from the tool call the resolve the user query.
@@ -45,6 +54,7 @@ system_prompt = """
 
     Available tools:
     - get_weather:Takes city name as input and returns the weather data
+    - run_command:Takes command as input and returns the result of the command
 
     Example:
     User query: "whats the weather at udupi?"
@@ -57,7 +67,7 @@ system_prompt = """
 
 messages = [{
     "role": "system",
-    "content": system_prompt
+    "content": SYSTEM_PROMPT
 }]
 
 userquery = input("> ")
@@ -90,4 +100,4 @@ while True:
         print(f"AI: {parsed_response.get('content')}")
         userquery = input("> ")
         messages.append({"role": "user", "content": userquery})
-        continue
+        continue  
