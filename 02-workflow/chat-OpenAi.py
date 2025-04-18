@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
+import requests
 
 load_dotenv()
 
@@ -9,11 +10,19 @@ client = OpenAI()
 def get_weather(city:str):
     # Simulate a weather API call
     print("Tool Called :get_weather:city")
-    return f"21 degree celcius."
+    url = f"https://wttr.in/{city}?format=%C+%t"
+    weather_response = requests.get(url, timeout=10)
+
+    if weather_response.status_code == 200:
+        return f"The weather in {city} is {weather_response.text}."
+    else:
+        return f"Could not retrieve weather data for {city}."
 
 available_tools = {
-    "function": get_weather,
-    "description": "Takes city name as input and returns the weather data",
+    "get_weather":{
+        "function": get_weather,
+        "description": "Takes city name as input and returns the weather data",
+    }
 }
 
 system_prompt = """
@@ -36,7 +45,6 @@ system_prompt = """
 
     Available tools:
     - get_weather:Takes city name as input and returns the weather data
-
 
     Example:
     User query: "whats the weather at udupi?"
