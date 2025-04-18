@@ -9,7 +9,7 @@ client = OpenAI()
 
 def get_weather(city:str):
     # Simulate a weather API call
-    print("Tool Called :get_weather:city")
+    print(f"Tool Called :get_weather:city")
     url = f"https://wttr.in/{city}?format=%C+%t"
     weather_response = requests.get(url, timeout=10)
 
@@ -88,4 +88,6 @@ while True:
     
     if parsed_response.get("step") == "output":
         print(f"AI: {parsed_response.get('content')}")
-        break
+        userquery = input("> ")
+        messages.append({"role": "user", "content": userquery})
+        continue
