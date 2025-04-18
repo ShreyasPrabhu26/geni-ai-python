@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from openai import OpenAI
+import json
 
 load_dotenv()
 
@@ -7,7 +8,13 @@ client = OpenAI()
 
 def get_weather(city:str):
     # Simulate a weather API call
+    print("Tool Called :get_weather:city")
     return f"21 degree celcius."
+
+available_tools = {
+    "function": get_weather,
+    "description": "Takes city name as input and returns the weather data",
+}
 
 system_prompt = """
     You are a helpful assistant who is specialized in resolving user query.
@@ -28,6 +35,7 @@ system_prompt = """
     }}
 
     Available tools:
+    - get_weather:Takes city name as input and returns the weather data
 
 
     Example:
@@ -39,18 +47,37 @@ system_prompt = """
     Output:{{"step":""output","content":The weather at udupi seems to be 21 degree celcius"}}}
 """
 
-completion = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {
-            "role": "system",
-            "content": system_prompt
-        },
-        {
-            "role": "user",
-            "content": "whats the weather at udupi?"
-        },
-    ],
-)
+messages = [{
+    "role": "system",
+    "content": system_prompt
+}]
 
-print(completion.choices[0].message.content)
+userquery = input("> ")
+messages.append({"role": "user", "content": userquery})
+
+while True:
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        response_format={"type": "json_object"},
+        messages=messages
+    )
+
+    parsed_response = json.loads(response.choices[0].message.content)
+    messages.append({"role": "assistant", "content":json.dumps(parsed_response)})
+
+    if parsed_response["step"] == "plan":
+        print(f"Assistant: {parsed_response['content']}")
+        continue
+
+    if parsed_response["step"] == "action":
+        tool_name = parsed_response.get("function")
+        tool_input = parsed_response.get("input")
+
+        if available_tools.get(tool_name,False):
+            function_output = available_tools[tool_name].get("function")(tool_input)
+            messages.append({"role":"assistant","content":json.dumps({"step":"observe","output":function_output})})
+            continue
+    
+    if parsed_response.get("step") == "output":
+        print(f"AI: {parsed_response.get('content')}")
+        break
