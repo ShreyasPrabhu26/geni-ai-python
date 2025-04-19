@@ -1,0 +1,13 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - models:/root/.ollama/models
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+volumes:
+  models:
